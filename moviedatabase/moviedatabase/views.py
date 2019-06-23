@@ -24,7 +24,7 @@ def _get_details_from_external_api(title):
     details = json.loads(response.content)
     if details['Response'] == 'True':
         return details
-    raise Http404
+    raise Http404(details['Error'])
 
 
 class FilteredMoviesView(View):
