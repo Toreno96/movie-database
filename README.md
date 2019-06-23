@@ -6,13 +6,13 @@ Simple REST API - a basic movie database interacting with external API.
 ## Full specification of endpoints
 
 1. POST /movies:
-    - Request body should contain only movie title, and its presence should be validated.
-    - Based on passed title, other movie details should be fetched from <http://www.omdbapi.com/> (or other similar, public movie database) - and saved to application database.
-    - Request response should include full movie object, along with all data fetched from external API.
+    - Request body should contain only movie title ✓, and its presence should be validated ✓.
+    - Based on passed title ✓, other movie details should be fetched from <http://www.omdbapi.com/> ✓ (or other similar, public movie database) - and saved to application database ✓.
+    - Request response should include full movie object ✓, along with all data fetched from external API ✓.
 
 2. GET /movies:
-    - Should fetch list of all movies already present in application database.
-    - (optional) Additional filtering, sorting.
+    - Should fetch list of all movies already present in application database ✓.
+    - (optional) Additional filtering (by ID ✓), sorting.
 
 3. POST /comments:
     - Request body should contain ID of movie already present in database, and comment text body.

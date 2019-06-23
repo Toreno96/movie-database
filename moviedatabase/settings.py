@@ -127,3 +127,6 @@ STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
 STATIC_URL = '/static/'
 
 django_heroku.settings(locals())
+
+OMDB_API_URL = 'https://omdbapi.com/'
+OMDB_API_KEY = os.environ['OMDB_API_KEY']
