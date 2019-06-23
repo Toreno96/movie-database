@@ -16,9 +16,9 @@ from django.views import View
 from .models import Movie
 
 
-def _get_details_from_external_api(title):
+def get_details_from_external_api(title, api_key=settings.OMDB_API_KEY):
     response = requests.get(settings.OMDB_API_URL, params={
-        'apikey': settings.OMDB_API_KEY,
+        'apikey': api_key,
         't': title,
     })
     details = json.loads(response.content)
@@ -46,6 +46,6 @@ class MoviesView(View):
         except KeyError:
             return HttpResponseBadRequest()
         else:
-            details = _get_details_from_external_api(title)
+            details = get_details_from_external_api(title)
             movie = Movie.objects.create(title=title, details=details)
             return HttpResponseRedirect(reverse('filtered_movies', args=(movie.id,)))
