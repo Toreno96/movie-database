@@ -163,7 +163,8 @@ class CommentsViewTests(MovieDatabaseViewTestCase):
 
     def test_post_response(self):
         self._post_movie(ONEWORD_MOVIE_TITLE)
-        movie, response = self._post_comment_to_last_movie(EXAMPLE_NON_EMPTY_COMMENT)
+        movie, response = self._post_comment_to_last_movie(
+            EXAMPLE_NON_EMPTY_COMMENT)
         comment_id = Comment.objects.last().pk
         expected_url = reverse('filtered_comments', args=(comment_id,))
         self.assertRedirects(response, expected_url)
