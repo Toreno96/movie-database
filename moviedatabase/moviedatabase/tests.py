@@ -22,6 +22,10 @@ class ExternalApiTests(TestCase):
         self.assertRaises(
             Http404, views.get_details_from_external_api, '', api_key='spam egg ham')
 
+    def test_empty_title(self):
+        self.assertRaises(
+            Http404, views.get_details_from_external_api, '')
+
     def test_movie_not_found(self):
         self.assertRaises(
             Http404, views.get_details_from_external_api, NOT_FOUND_MOVIE_TITLE)
