@@ -18,12 +18,12 @@ Double check mark (✓✓) means the feature _and_ its automated tests are imple
     - (optional) Additional filtering (by ID ✓✓), sorting.
 
 3. POST /comments:
-    - Request body should contain ID of movie already present in database, and comment text body.
-    - Comment should be saved to application database and returned in request response.
+    - Request body should contain ID of movie ✓✓ already present in database ✓✓, and comment text body ✓✓.
+    - Comment should be saved to application database ✓✓ and returned in request response ✓✓.
 
 4. GET /comments:
-    - Should fetch list of all comments present in application database.
-    - Should allow filtering comments by associated movie, by passing its ID.
+    - Should fetch list of all comments present in application database ✓✓.
+    - Should allow filtering comments by associated movie, by passing its ID ✓✓.
 
 5. GET /top:
     - Should return top movies already present in the database ranking based on a number of comments added to the movie (as in the example) in the specified date range. The response should include the ID of the movie, position in rank and total number of comments (in the specified date range).
