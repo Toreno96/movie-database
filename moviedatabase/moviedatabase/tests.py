@@ -4,15 +4,21 @@ import string
 from django.http import Http404
 from django.test import TestCase
 from django.urls import reverse
+from django.utils import timezone
 
 from . import views
-from .models import Movie
+from .models import (
+    Comment,
+    Movie,
+)
 
 
 NOT_FOUND_MOVIE_TITLE = ''.join(random.choices(
     string.ascii_letters + string.digits, k=50))
 ONEWORD_MOVIE_TITLE = 'Deadpool'
 MULTIWORD_MOVIE_TITLE = 'Back to the Future'
+
+EXAMPLE_NON_EMPTY_COMMENT = 'Great movie, 5/7.'
 
 
 class ExternalApiTests(TestCase):
@@ -97,3 +103,104 @@ class MoviesViewTests(TestCase):
         response = self._get_all_movies()
         self.assertContains(response, ONEWORD_MOVIE_TITLE)
         self.assertContains(response, MULTIWORD_MOVIE_TITLE)
+
+
+class CommentsViewTests(TestCase):
+    def _get_all_comments(self):
+        return self.client.get(reverse('comments'))
+
+    def test_no_comments(self):
+        response = self._get_all_comments()
+        self.assertEqual(response.status_code, 200)
+        self.assertJSONEqual(response.content, [])
+
+    def test_post_no_movie_id_and_text(self):
+        response = self.client.post(reverse('comments'))
+        self.assertEqual(response.status_code, 400)
+
+    def test_post_no_movie_id(self):
+        response = self.client.post(
+            reverse('comments'), {'text': EXAMPLE_NON_EMPTY_COMMENT})
+        self.assertEqual(response.status_code, 400)
+
+    def test_post_no_text(self):
+        response = self.client.post(reverse('comments'), {'movie_id': 1})
+        self.assertEqual(response.status_code, 400)
+
+    def test_post_empty_text(self):
+        response = self.client.post(
+            reverse('comments'), {'movie_id': 1, 'text': ''})
+        self.assertEqual(response.status_code, 400)
+
+    def _post_movie(self, title):
+        return self.client.post(reverse('movies'), {'title': title})
+
+    def test_post_movie_not_found(self):
+        self._post_movie(ONEWORD_MOVIE_TITLE)
+        movie = Movie.objects.last()
+        response = self.client.post(
+            reverse('comments'),
+            {'movie_id': movie.pk + 1, 'text': EXAMPLE_NON_EMPTY_COMMENT}
+        )
+        self.assertEqual(response.status_code, 404)
+
+    def test_post_saves_to_database(self):
+        self._post_movie(ONEWORD_MOVIE_TITLE)
+        movie = Movie.objects.last()
+        self.client.post(
+            reverse('comments'),
+            {'movie_id': movie.pk, 'text': EXAMPLE_NON_EMPTY_COMMENT}
+        )
+        comment = Comment.objects.last()
+        self.assertEqual(comment.movie_id, movie)
+        self.assertEqual(comment.text, EXAMPLE_NON_EMPTY_COMMENT)
+        self.assertAlmostEqual(comment.added, timezone.now(),
+                               delta=timezone.timedelta(minutes=1))
+
+    def test_post_response(self):
+        self._post_movie(ONEWORD_MOVIE_TITLE)
+        movie = Movie.objects.last()
+        response = self.client.post(
+            reverse('comments'),
+            {'movie_id': movie.pk, 'text': EXAMPLE_NON_EMPTY_COMMENT}
+        )
+        comment_id = Comment.objects.last().pk
+        expected_url = reverse('filtered_comments', args=(comment_id,))
+        self.assertRedirects(response, expected_url)
+
+        response = self.client.get(expected_url)
+        self.assertContains(response, f'"movie_id": {movie.pk}')
+        self.assertContains(response, f'"text": "{EXAMPLE_NON_EMPTY_COMMENT}"')
+        self.assertContains(response, '"added":')
+
+    def test_get_all(self):
+        self._post_movie(ONEWORD_MOVIE_TITLE)
+        movie = Movie.objects.last()
+        self.client.post(
+            reverse('comments'),
+            {'movie_id': movie.pk, 'text': EXAMPLE_NON_EMPTY_COMMENT}
+        )
+        self._post_movie(MULTIWORD_MOVIE_TITLE)
+        movie = Movie.objects.last()
+        self.client.post(
+            reverse('comments'),
+            {'movie_id': movie.pk, 'text': EXAMPLE_NON_EMPTY_COMMENT}
+        )
+        response = self._get_all_comments()
+        self.assertContains(response, EXAMPLE_NON_EMPTY_COMMENT, count=2)
+
+    def test_get_all_for_specific_movie(self):
+        self._post_movie(ONEWORD_MOVIE_TITLE)
+        movie = Movie.objects.last()
+        self.client.post(
+            reverse('comments'),
+            {'movie_id': movie.pk, 'text': EXAMPLE_NON_EMPTY_COMMENT}
+        )
+        self._post_movie(MULTIWORD_MOVIE_TITLE)
+        movie = Movie.objects.last()
+        self.client.post(
+            reverse('comments'),
+            {'movie_id': movie.pk, 'text': EXAMPLE_NON_EMPTY_COMMENT}
+        )
+        response = self.client.get(reverse('comments'), {'movie_id': movie.pk})
+        self.assertContains(response, EXAMPLE_NON_EMPTY_COMMENT, count=1)

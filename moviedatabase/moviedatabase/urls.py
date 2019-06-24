@@ -8,4 +8,9 @@ urlpatterns = [
         path('<int:movie_id>/', views.FilteredMoviesView.as_view(),
              name='filtered_movies'),
     ])),
+    path('comments/', include([
+        path('', views.CommentsView.as_view(), name='comments'),
+        path('<int:comment_id>/', views.FilteredCommentsView.as_view(),
+             name='filtered_comments'),
+    ])),
 ]
