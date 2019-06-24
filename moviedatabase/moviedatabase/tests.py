@@ -32,16 +32,16 @@ class ExternalApiTests(TestCase):
         self.assertRaises(
             Http404, views.get_details_from_external_api, NOT_FOUND_MOVIE_TITLE)
 
-    def _helper_test_movie_found(self, title):
+    def _test_movie_found(self, title):
         details = views.get_details_from_external_api(title)
         self.assertIsInstance(details, dict)
         self.assertNotEqual(details, {})
 
     def test_oneword_movie_found(self):
-        self._helper_test_movie_found(ONEWORD_MOVIE_TITLE)
+        self._test_movie_found(ONEWORD_MOVIE_TITLE)
 
     def test_multiword_movie_found(self):
-        self._helper_test_movie_found(MULTIWORD_MOVIE_TITLE)
+        self._test_movie_found(MULTIWORD_MOVIE_TITLE)
 
 
 class MoviesViewTests(TestCase):
