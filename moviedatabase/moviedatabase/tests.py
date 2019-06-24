@@ -4,6 +4,11 @@ from django.test import TestCase
 from . import views
 
 
+NOT_FOUND_MOVIE_TITLE = 'spam egg ham'
+ONEWORD_MOVIE_TITLE = 'Deadpool'
+MULTIWORD_MOVIE_TITLE = 'Back to the Future'
+
+
 class ExternalApiTests(TestCase):
     def test_no_api_key(self):
         self.assertRaises(
@@ -15,7 +20,7 @@ class ExternalApiTests(TestCase):
 
     def test_movie_not_found(self):
         self.assertRaises(
-            Http404, views.get_details_from_external_api, 'spam egg ham')
+            Http404, views.get_details_from_external_api, NOT_FOUND_MOVIE_TITLE)
 
     def _helper_test_movie_found(self, title):
         details = views.get_details_from_external_api(title)
@@ -23,7 +28,7 @@ class ExternalApiTests(TestCase):
         self.assertNotEqual(details, {})
 
     def test_oneword_movie_found(self):
-        self._helper_test_movie_found('Deadpool')
+        self._helper_test_movie_found(ONEWORD_MOVIE_TITLE)
 
     def test_multiword_movie_found(self):
-        self._helper_test_movie_found('Back to the Future')
+        self._helper_test_movie_found(MULTIWORD_MOVIE_TITLE)
