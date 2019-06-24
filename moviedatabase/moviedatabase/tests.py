@@ -1,6 +1,8 @@
 import random
 import string
 
+from unittest import mock
+
 from django.http import Http404
 from django.test import TestCase
 from django.urls import reverse
@@ -62,6 +64,21 @@ class MovieDatabaseViewTestCase(TestCase):
             {'movie_id': movie.pk, 'text': text}
         )
         return movie, response
+
+    def _post_three_comments_with_mocked_datetime(self):
+        self._post_movie(ONEWORD_MOVIE_TITLE)
+        mocked_datetimes = [
+            timezone.datetime(
+                2017, 1, 1, tzinfo=timezone.get_current_timezone()),
+            timezone.datetime(
+                2018, 1, 1, tzinfo=timezone.get_current_timezone()),
+            timezone.datetime(
+                2019, 1, 1, tzinfo=timezone.get_current_timezone()),
+        ]
+        for mocked in mocked_datetimes:
+            with mock.patch('django.utils.timezone.now', mock.Mock(return_value=mocked)):
+                self._post_comment_to_last_movie(EXAMPLE_NON_EMPTY_COMMENT)
+        return mocked_datetimes
 
 
 class MoviesViewTests(MovieDatabaseViewTestCase):
@@ -189,3 +206,39 @@ class CommentsViewTests(MovieDatabaseViewTestCase):
         movie, _ = self._post_comment_to_last_movie(EXAMPLE_NON_EMPTY_COMMENT)
         response = self.client.get(reverse('comments'), {'movie_id': movie.pk})
         self.assertContains(response, EXAMPLE_NON_EMPTY_COMMENT, count=1)
+
+
+class CommentsInDatetimeRangeTests(MovieDatabaseViewTestCase):
+    def test_all_in_range(self):
+        mocked_datetimes = self._post_three_comments_with_mocked_datetime()
+        comments = views.get_comments_in_datetime_range(
+            mocked_datetimes[0],
+            mocked_datetimes[-1]
+        )
+        self.assertEqual(len(comments), Comment.objects.count())
+
+    def test_start_equals_end(self):
+        mocked_datetimes = self._post_three_comments_with_mocked_datetime()
+        start = end = random.choice(mocked_datetimes)
+        comments = views.get_comments_in_datetime_range(
+            start,
+            end,
+        )
+        self.assertEqual(len(comments), 1)
+
+    def test_none_in_range(self):
+        mocked_datetimes = self._post_three_comments_with_mocked_datetime()
+        start = end = mocked_datetimes[0] - timezone.timedelta(seconds=1)
+        comments = views.get_comments_in_datetime_range(
+            start,
+            end,
+        )
+        self.assertEqual(len(comments), 0)
+
+    def test_two_in_range(self):
+        mocked_datetimes = self._post_three_comments_with_mocked_datetime()
+        comments = views.get_comments_in_datetime_range(
+            mocked_datetimes[0],
+            mocked_datetimes[1],
+        )
+        self.assertEqual(len(comments), 2)

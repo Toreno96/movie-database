@@ -84,3 +84,7 @@ class CommentsView(View):
             movie = get_object_or_404(Movie, pk=movie_id)
             comment = Comment.objects.create(movie_id=movie, text=text)
             return HttpResponseRedirect(reverse('filtered_comments', args=(comment.id,)))
+
+
+def get_comments_in_datetime_range(start, end):
+    return Comment.objects.filter(added__gte=start, added__lte=end)
