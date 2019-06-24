@@ -1,10 +1,14 @@
+import random
+import string
+
 from django.http import Http404
 from django.test import TestCase
 
 from . import views
 
 
-NOT_FOUND_MOVIE_TITLE = 'spam egg ham'
+NOT_FOUND_MOVIE_TITLE = ''.join(random.choices(
+    string.ascii_letters + string.digits, k=50))
 ONEWORD_MOVIE_TITLE = 'Deadpool'
 MULTIWORD_MOVIE_TITLE = 'Back to the Future'
 
