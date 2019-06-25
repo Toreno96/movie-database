@@ -78,3 +78,85 @@ Double check mark (✓✓) means the feature _and_ its automated tests are imple
 
 ]
 ```
+
+
+## Installation
+
+### Clone this repository
+
+```
+$ https://github.com/Toreno96/movie-database.git
+$ cd movie-database
+```
+
+### Setup Python virtualenv
+
+```
+$ python3 -m venv .venv
+$ source .venv/bin/activate
+$ pip install -r requirements.txt
+```
+
+### Environment variables
+
+#### Required
+
+- `SECRET_KEY` - secret key used by Django.
+- `OMDB_API_KEY` - API key to OMDb API.
+- `DEBUG` - any boolean value supported by Python function [`distutils.util.strtobool`](https://docs.python.org/3/distutils/apiref.html?highlight=strtobool#distutils.util.strtobool); if true, sets application in debug mode.
+
+#### Optional
+
+- `POSTGRES_NAME` - defaults to `moviedatabase`.
+- `POSTGRES_USER` - defaults to `moviedatabase`.
+- `POSTGRES_HOST` - defaults to `127.0.0.1`.
+- `POSTGRES_PORT` - defaults to `5432`.
+
+### Prepare the database
+
+[Install and configure](https://wiki.archlinux.org/index.php/PostgreSQL) PostgreSQL database.
+
+**Remember that database user must be a superuser**.
+
+If configuration differs from defaults, above-mentioned optional environment variables becomes required.
+
+Finally, migrate the database:
+```
+$ python manage.py migrate
+```
+
+### Run server
+
+```
+$ python manage.py runserver
+```
+
+You should see similar output to:
+```
+Watching for file changes with StatReloader
+Performing system checks...
+
+System check identified no issues (0 silenced).
+June 25, 2019 - 20:20:04
+Django version 2.2.2, using settings 'moviedatabase.settings'
+Starting development server at http://127.0.0.1:8000/
+Quit the server with CONTROL-C.
+```
+
+
+## Tests
+
+To run automated tests, use:
+```
+$ python manage.py test moviedatabase.moviedatabase
+```
+
+Alternatively:
+```
+$ coverage run --source='moviedatabase.moviedatabase' manage.py test moviedatabase.moviedatabase
+```
+
+And see coverage report:
+```
+$ coverage report -m
+```
