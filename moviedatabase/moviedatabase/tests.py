@@ -23,6 +23,16 @@ MULTIWORD_MOVIE_TITLE = 'Back to the Future'
 EXAMPLE_NON_EMPTY_COMMENT = 'Great movie, 5/7.'
 
 
+def _add_mock_movies(count):
+    for _ in range(count):
+        Movie.objects.create(title='', details={})
+
+
+def _add_mock_comments(movie, count):
+    for _ in range(count):
+        Comment.objects.create(movie_id=movie, text='')
+
+
 class ExternalApiTests(TestCase):
     def test_no_api_key(self):
         self.assertRaises(
@@ -241,3 +251,113 @@ class CommentsInDatetimeRangeTests(MovieDatabaseViewTestCase):
             mocked_datetimes[1],
         )
         self.assertEqual(len(comments), 2)
+
+
+class TopViewTests(MovieDatabaseViewTestCase):
+    def test_no_start_and_end(self):
+        response = self.client.get(reverse('top'))
+        self.assertEqual(response.status_code, 400)
+
+    def test_no_start(self):
+        response = self.client.get(reverse('top'), {'end_timestamp': 0})
+        self.assertEqual(response.status_code, 400)
+
+    def test_no_end(self):
+        response = self.client.get(reverse('top'), {'start_timestamp': 0})
+        self.assertEqual(response.status_code, 400)
+
+    def _get_top_movies(self, start_timestamp, end_timestamp):
+        return self.client.get(
+            reverse('top'), {
+                'start_timestamp': start_timestamp,
+                'end_timestamp': end_timestamp,
+            },
+        )
+
+    def _get_top_movies_of_all_time(self):
+        return self._get_top_movies(
+            0,
+            # Extra +1 second to include a fraction of a second
+            int(timezone.now().timestamp()) + 1,
+        )
+
+    def test_invalid_start(self):
+        response = self._get_top_movies(string.ascii_letters, 0)
+        self.assertEqual(response.status_code, 400)
+
+    def test_invalid_end(self):
+        response = self._get_top_movies(0, string.ascii_letters)
+        self.assertEqual(response.status_code, 400)
+
+    def test_no_movies(self):
+        response = self._get_top_movies_of_all_time()
+        self.assertJSONEqual(response.content, [])
+
+    def test_no_comments(self):
+        self._post_movie(ONEWORD_MOVIE_TITLE)
+        movie = Movie.objects.last()
+        response = self._get_top_movies_of_all_time()
+        self.assertJSONEqual(response.content, [
+            {
+                'movie_id': movie.pk,
+                'total_comments': 0,
+                'rank': 1,
+            },
+        ])
+
+    def test_comment_out_of_date_range(self):
+        self._post_movie(ONEWORD_MOVIE_TITLE)
+        self._post_comment_to_last_movie(EXAMPLE_NON_EMPTY_COMMENT)
+        movie = Movie.objects.last()
+        start = end = 0
+        response = self._get_top_movies(start, end)
+        self.assertJSONEqual(response.content, [
+            {
+                'movie_id': movie.pk,
+                'total_comments': 0,
+                'rank': 1,
+            },
+        ])
+
+    def test_comment_in_date_range(self):
+        self._post_movie(ONEWORD_MOVIE_TITLE)
+        self._post_comment_to_last_movie(EXAMPLE_NON_EMPTY_COMMENT)
+        movie = Movie.objects.last()
+        response = self._get_top_movies_of_all_time()
+        self.assertJSONEqual(response.content, [
+            {
+                'movie_id': movie.pk,
+                'total_comments': 1,
+                'rank': 1,
+            },
+        ])
+
+    def test_example_from_specification(self):
+        _add_mock_movies(4)
+        movies = Movie.objects.all()
+        _add_mock_comments(movies[1], 4)
+        for movie in [movies[2], movies[3]]:
+            _add_mock_comments(movie, 2)
+        response = self._get_top_movies_of_all_time()
+        self.assertJSONEqual(response.content, [
+            {
+                'movie_id': movies[1].pk,
+                'total_comments': 4,
+                'rank': 1,
+            },
+            {
+                'movie_id': movies[2].pk,
+                'total_comments': 2,
+                'rank': 2,
+            },
+            {
+                'movie_id': movies[3].pk,
+                'total_comments': 2,
+                'rank': 2,
+            },
+            {
+                'movie_id': movies[0].pk,
+                'total_comments': 0,
+                'rank': 3,
+            },
+        ])
