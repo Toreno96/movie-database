@@ -1,5 +1,7 @@
 import json
 
+from collections import Counter
+
 import requests
 
 from django.conf import settings
@@ -9,9 +11,11 @@ from django.http import (
     HttpResponse,
     HttpResponseBadRequest,
     HttpResponseRedirect,
+    JsonResponse,
 )
 from django.shortcuts import get_object_or_404
 from django.urls import reverse
+from django.utils import timezone
 from django.views import View
 
 from .models import (
@@ -88,3 +92,38 @@ class CommentsView(View):
 
 def get_comments_in_datetime_range(start, end):
     return Comment.objects.filter(added__gte=start, added__lte=end)
+
+
+class TopView(View):
+    def get(self, request, *args, **kwargs):
+        try:
+            start_timestamp = int(request.GET['start_timestamp'])
+            end_timestamp = int(request.GET['end_timestamp'])
+        except (KeyError, ValueError):
+            return HttpResponseBadRequest()
+        else:
+            comments = get_comments_in_datetime_range(
+                timezone.datetime.fromtimestamp(
+                    start_timestamp, tz=timezone.get_current_timezone()),
+                timezone.datetime.fromtimestamp(
+                    end_timestamp, tz=timezone.get_current_timezone()),
+            )
+
+            total_comments_by_movie_id = Counter()
+            for comment in comments:
+                total_comments_by_movie_id[comment.movie_id.pk] += 1
+            # Specification requires that movies without any comments must be
+            # included in the ranking
+            for movie in Movie.objects.exclude(comment__in=comments):
+                total_comments_by_movie_id[movie.pk] = 0
+
+            position_by_total_comments = {k: v for v, k in enumerate(
+                sorted(set(total_comments_by_movie_id.values()), reverse=True),
+                start=1)}
+
+            top = [{'movie_id': m,
+                    'total_comments': c,
+                    'rank': position_by_total_comments[c]}
+                   for m, c in total_comments_by_movie_id.most_common()]
+
+            return JsonResponse(top, safe=False)

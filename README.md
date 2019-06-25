@@ -26,9 +26,9 @@ Double check mark (✓✓) means the feature _and_ its automated tests are imple
     - Should allow filtering comments by associated movie, by passing its ID ✓✓.
 
 5. GET /top:
-    - Should return top movies already present in the database ranking based on a number of comments added to the movie (as in the example) in the specified date range. The response should include the ID of the movie, position in rank and total number of comments (in the specified date range).
-    - Movies with the same number of comments should have the same position in the ranking.
-    - Should require specifying a date range for which statistics should be generated.
+    - Should return top movies already present in the database ✓ ranking based on a number of comments added to the movie (as in the example) ✓ in the specified date range ✓. The response should include the ID of the movie ✓, position in rank ✓ and total number of comments (in the specified date range) ✓.
+    - Movies with the same number of comments should have the same position in the ranking ✓.
+    - Should require specifying a date range for which statistics should be generated ✓.
 
 
 ## Example response

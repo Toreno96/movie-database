@@ -13,4 +13,7 @@ urlpatterns = [
         path('<int:comment_id>/', views.FilteredCommentsView.as_view(),
              name='filtered_comments'),
     ])),
+    path('top/', include([
+        path('', views.TopView.as_view()),
+    ])),
 ]
