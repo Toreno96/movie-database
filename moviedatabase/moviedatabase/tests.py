@@ -57,7 +57,6 @@ class MovieDatabaseViewTestCase(TestCase):
         return self.client.post(reverse('movies'), {'title': title})
 
     def _post_comment_to_last_movie(self, text):
-        self._post_movie(ONEWORD_MOVIE_TITLE)
         movie = Movie.objects.last()
         response = self.client.post(
             reverse('comments'),
