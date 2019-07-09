@@ -5,10 +5,12 @@
 #    pip-compile dev-requirements.in
 #
 astroid==2.2.5            # via pylint
+autopep8==1.4.4
 coverage==4.5.3
 isort==4.3.21             # via pylint
 lazy-object-proxy==1.4.1  # via astroid
 mccabe==0.6.1             # via pylint
+pycodestyle==2.5.0        # via autopep8
 pylint-django==2.0.10
 pylint-plugin-utils==0.5  # via pylint-django
 pylint==2.3.1
